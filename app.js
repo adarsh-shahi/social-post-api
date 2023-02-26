@@ -1,4 +1,5 @@
 const http = require("http");
+const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 dotenv.config();
 const pool = require("./config/db.js");
@@ -21,10 +22,10 @@ const errorMessage = (statusCode) => {
 	else if (statusCode === 500) return "server error";
 };
 
-const errorResoponse = (statusCode, res) => {
+const errorResoponse = (statusCode, res, message) => {
 	const obj = {
 		status: "fail",
-		message: errorMessage(statusCode),
+		message: message || errorMessage(statusCode),
 	};
 	res.end(setResponse(res, obj, statusCode));
 };
@@ -48,7 +49,6 @@ const parseData = (req) => {
  */
 
 const signup = async (req, res) => {
-	console.log(req.data);
 	try {
 		if (!req.data) {
 			return errorResoponse(
@@ -58,19 +58,72 @@ const signup = async (req, res) => {
 			);
 		}
 		const { username, email, password } = req.data;
-		if (!username || !email || !password)
+		if (!username || !email || !password) {
 			return errorResoponse(
 				404,
 				res,
 				"please provide username, email and password"
 			);
-		console.log(`perfect`);
+		}
+		const hashedPassword = await bcrypt.hash(password, 10);
+		console.log(hashedPassword);
 		await pool.query(
-			`INSERT INTO users(username, email, password) VALUES ('${username}', '${email}', '${password}')`
+			`INSERT INTO users(username, email, password) VALUES ('${username}', '${email}', '${hashedPassword}')`
 		);
 		const ans = {
 			status: "success",
-			message: req.data,
+			message: {
+				username,
+				email,
+			},
+		};
+		res.end(setResponse(res, ans, 200));
+	} catch (err) {
+		console.log(err);
+		errorResoponse(500, res, err.detail);
+	}
+};
+
+const login = async (req, res) => {
+	try {
+		if (!req.data) {
+			return errorResoponse(
+				404,
+				res,
+				"please provide username, email and password"
+			);
+		}
+		const { username, email, password } = req.data;
+		if (!password || (!email && !username)) {
+			return errorResoponse(
+				404,
+				res,
+				"please provide username, email and password"
+			);
+		}
+		const key = email ? "email" : "username";
+		const value = email ? email : username;
+
+		// Reterving password from DB
+		const result = await pool.query(
+			`SELECT password FROM users WHERE ${key} = '${value}'`
+		);
+		const hashedPassFromDB = result.rows[0].password;
+
+		console.log(hashedPassFromDB);
+		if (!hashedPassFromDB)
+			// if we dont find user password - user dosent exist
+			return errorResoponse(401, res, "account dosen't exist");
+
+		// Comparing passwords
+		if (!(await bcrypt.compare(password, hashedPassFromDB)))
+			return errorResoponse(401, res, "login failed");
+
+		const ans = {
+			status: "success",
+			message: {
+				key,
+			},
 		};
 		res.end(setResponse(res, ans, 200));
 	} catch (err) {
@@ -83,9 +136,9 @@ const signup = async (req, res) => {
  */
 
 const handlePostRequest = (req, res) => {
-	console.log(req.url);
-	if (req.url === "/signup") return signup(req, res);
-	return errorResoponse(404, res);
+	if (req.url === "/signup" || req.url === "/signup/") return signup(req, res);
+	if (req.url === "/login" || req.url === "/login/") return login(req, res);
+	return errorResoponse(400, res);
 };
 
 /*
