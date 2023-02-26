@@ -1,22 +1,24 @@
 # Social Post API
+
 ## _Follows REST design pattern_
+
 #
 
- ![](https://img.shields.io/badge/release-v1.0-blue)
-## Features 
+![](https://img.shields.io/badge/release-v1.0-blue)
+
+## Features
 
 - User creates a post with one image and a caption
 - Can comment on a post
 - Can like posts and comments under a post
 - Visit other user's profile and self profile
 
-> The overriding purpose of this  project
+> The overriding purpose of this project
 > is to learn http module to create API.
 > And aslo gain a confidence using PostgreSQL
 > getting some hands dirty with SQL queries
-> You can refer these code and can also suggest 
+> You can refer these code and can also suggest
 > some improvements.
-
 
 ## Tech
 
@@ -41,7 +43,7 @@
 	username VARCHAR(50) NOT NULL UNIQUE,
 	bio VARCHAR(240),
 	email VARCHAR(30) NOT NULL UNIQUE,
-	password VARCHAR(50) NOT NULL
+	password VARCHAR(500) NOT NULL
 );
 ```
 
@@ -59,6 +61,7 @@ CREATE TABLE posts(
 ```
 
 3. Comments Table
+
 ```sql
 CREATE TABLE comments(
 	id SERIAL PRIMARY KEY,
@@ -71,6 +74,7 @@ CREATE TABLE comments(
 ```
 
 4. Likes Table
+
 ```sql
 CREATE TABLE likes(
 	id SERIAL PRIMARY KEY,
@@ -89,6 +93,7 @@ CREATE TABLE likes(
 ```
 
 5. Followers Table
+
 ```sql
 CREATE TABLE followers(
 	id SERIAL PRIMARY KEY,
@@ -98,10 +103,15 @@ CREATE TABLE followers(
 	UNIQUE(leader_id, follower_id)
 );
 ```
+
 #
+
 #
+
 #
+
 #### API Endpoints
+
 _work in progress......_
 
 ## License
